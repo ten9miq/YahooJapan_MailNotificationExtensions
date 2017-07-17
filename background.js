@@ -13,8 +13,9 @@ function getPageResouser() {
 		success: function(res) {
 			var contents = res.toString();
 			// ajaxが取得したHTMLなど
-			data = $(contents).find('.Personalbox__noticeText').text();
-			console.log("data=" + data);
+			// data = $(contents).find('.Personalbox__noticeText').text();
+			var data = $(contents).text();
+			// console.log("data=" + data);
 			var pattern = /新着([0-9]+)件/;
 			console.log("data取り出し=" + data.match(pattern));
 			if (data.match(pattern) !== null) { //メールがある場合
