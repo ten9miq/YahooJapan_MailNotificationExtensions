@@ -1,6 +1,6 @@
 {
 	"name": "Yahoo! Japanメール通知",
-	"version": "0.5",
+	"version": "0.6",
 	"manifest_version": 2,
 	"description": "Yahoo! Japanメール通知拡張 30秒に一度自動で確認 ログインしておく必要があります。",
 	"permissions": [
