@@ -10,7 +10,7 @@ function getPageResouser() {
 		type: "GET",
 		crossDomain: true,
 		cache: false,
-		success: function(res) {
+		success: function (res) {
 			var contents = res.toString();
 			// ajaxが取得したHTMLなど
 			// data = $(contents).find('.Personalbox__noticeText').text();
@@ -36,7 +36,7 @@ function getPageResouser() {
 getPageResouser();
 
 //一定周期で動作
-setInterval(function() {
+setInterval(function () {
 	console.log("Inerval");
 	getPageResouser();
 }, wait);
@@ -53,8 +53,8 @@ function Sleep(T) {
 
 //アイコンをクリックした場合YahooMailを開く
 chrome.browserAction.onClicked.addListener(
-	function() {
-		var action_url = "https://jp.mg5.mail.yahoo.co.jp/";
+	function () {
+		var action_url = "https://jp.mg5.mail.yahoo.co.jp/neo/launch";
 		chrome.tabs.create({
 			url: action_url
 		});
