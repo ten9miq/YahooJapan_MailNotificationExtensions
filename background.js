@@ -95,7 +95,7 @@ chrome.browserAction.onClicked.addListener(function() {
 	chrome.tabs.create({
 		url: open_ymail_page_url,
 	});
-	setInterval(function() {
+	setTimeout(function() {
 		view_new_mail_count();
 	}, 10000);
 });
