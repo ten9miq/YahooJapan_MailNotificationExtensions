@@ -1,65 +1,101 @@
-console.log("background is running");
-receiveMail = 0;
-wait = 30000;
-var urlRequest = 'https://www.yahoo.co.jp/'; //情報源のURL
+const wait = 30000;
+const eappid_page_url = 'https://www.yahoo.co.jp/'; // eappid と ログイン状態のチェック先
+const new_mail_count_url = 'https://web-yunz.yahoo.co.jp/Yunz/V1/getNotifications?eappid='; // メールの件数の取得先
+const open_ymail_page_url = 'https://jp.mg5.mail.yahoo.co.jp/neo/launch'; // メールの表示ページ
 
-function getPageResouser() {
-	//情報の取得
-	$.ajax({
-		url: urlRequest,
-		type: "GET",
-		crossDomain: true,
-		cache: false,
-		success: function (res) {
-			var contents = res.toString();
-			// ajaxが取得したHTMLなど
-			// data = $(contents).find('.Personalbox__noticeText').text();
-			var data = $(contents).text();
-			// console.log("data=" + data);
-			var pattern = /新着([0-9]+)件/;
-			console.log("data取り出し=" + data.match(pattern));
-			if (data.match(pattern) !== null) { //メールがある場合
-				receiveMail = data.match(pattern)[1];
-				console.log("if = " + receiveMail);
-				chrome.browserAction.setBadgeText({
-					text: String(receiveMail)
-				});
-			} else { //メールがない場合
-				console.log("新着メールなし");
-				chrome.browserAction.setBadgeText({
-					text: ""
-				});
-			}
-		}
-	});
-}
-getPageResouser();
+view_new_mail_count();
 
 //一定周期で動作
-setInterval(function () {
-	console.log("Inerval");
-	getPageResouser();
+setInterval(function() {
+	console.log('Inerval');
+	view_new_mail_count();
 }, wait);
 
-function Sleep(T) {
-	var d1 = new Date().getTime();
-	var d2 = new Date().getTime();
-	while (d2 < d1 + 1000 * T) { //T秒待つ
-		d2 = new Date().getTime();
-	}
-	return;
+function view_new_mail_count() {
+	(async () => {
+		let mail_count = await get_mail_count();
+		console.log('mail_count', mail_count);
+
+		if (mail_count == 0) {
+			mail_count = '';
+		}
+
+		chrome.browserAction.setBadgeText({
+			text: String(mail_count),
+		});
+	})();
 }
 
+async function set_eappid() {
+	try {
+		const connecter = new api_connecter(eappid_page_url);
+		await connecter.get_method();
+		const text = await connecter.get_text();
+		var pattern = /eappid\\u0022:\\u0022(.+?)\\u0022,\\u0022/;
+		const page_eappid = text.match(pattern);
+		console.log('取得したeappid', page_eappid);
+		if (page_eappid !== null) {
+			chrome.storage.local.set({ eappid: page_eappid[1] }, () => {});
+			return page_eappid[1];
+		}
+	} catch (error) {
+		console.log(error);
+	}
+}
+
+async function get_eappid() {
+	const eappid = await browser.storage.local.get(['eappid']);
+	if (eappid.eappid == null) {
+		// eappidがない時
+		return await set_eappid();
+	} else {
+		return eappid.eappid;
+	}
+}
+
+async function is_login() {
+	const connecter = new api_connecter(eappid_page_url);
+	await connecter.get_method();
+	const html = await connecter.get_dom();
+	const no_login_dom = html.querySelector('.Personalbox__logout');
+	// このDOM要素がある時ログインしていない
+	if (no_login_dom == null) {
+		// 要素がないということはログイン済みである
+		return true;
+	} else {
+		return false;
+	}
+}
+
+async function get_mail_count() {
+	try {
+		if (!(await is_login())) {
+			// ログインしていない
+			return 'login';
+		}
+		const eappid = await get_eappid();
+		const connecter = new api_connecter(new_mail_count_url + eappid);
+		try {
+			await connecter.get_method();
+			const json = await connecter.get_json();
+			const mail_count = json.Result.NewMailCount;
+			return mail_count;
+		} catch (error) {
+			await set_eappid();
+			return await get_eappid();
+		}
+	} catch (error) {
+		console.log(error);
+		return 0;
+	}
+}
 
 //アイコンをクリックした場合YahooMailを開く
-chrome.browserAction.onClicked.addListener(
-	function () {
-		var action_url = "https://jp.mg5.mail.yahoo.co.jp/neo/launch";
-		chrome.tabs.create({
-			url: action_url
-		});
-		console.log("action");
-		Sleep(10); //待ち時間
-		console.log("待ち時間完了");
-		getPageResouser();
+chrome.browserAction.onClicked.addListener(function() {
+	chrome.tabs.create({
+		url: open_ymail_page_url,
 	});
+	setInterval(function() {
+		view_new_mail_count();
+	}, 10000);
+});
