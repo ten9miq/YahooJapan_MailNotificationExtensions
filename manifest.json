@@ -5,7 +5,7 @@
 	"description": "ヤフーメール通知拡張 30秒に一度自動で確認 ログインしておく必要があります。",
 	"permissions": [
 		"storage",
-		"https://www.yahoo.co.jp/*",
+		"https://www.yahoo.co.jp/",
 		"https://jp.mg5.mail.yahoo.co.jp/",
 		"https://web-yunz.yahoo.co.jp/Yunz/V1/getNotifications"
 	],
