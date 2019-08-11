@@ -1,0 +1,9 @@
+{
+	"useTabs": true,
+	"endOfLine": "auto",
+	"singleQuote": true,
+	"semi": true,
+	"printWidth": 120,
+	"trailingComma": "all",
+	"trailingCommaPHP":"php5"
+}
