@@ -82,7 +82,7 @@ async function get_mail_count() {
 			return mail_count;
 		} catch (error) {
 			await set_eappid();
-			return await get_eappid();
+			return await get_mail_count();
 		}
 	} catch (error) {
 		console.log(error);
