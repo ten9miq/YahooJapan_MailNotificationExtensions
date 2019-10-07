@@ -31,8 +31,18 @@ async function set_eappid() {
 		const connecter = new api_connecter(eappid_page_url);
 		await connecter.get_method();
 		const text = await connecter.get_text();
-		var pattern = /eappid\\u0022:\\u0022(.+?)\\u0022,\\u0022/;
-		const page_eappid = text.match(pattern);
+
+		const patterns = [
+		    /eappid\u0022:\u0022(.+?)\u0022,\u0022/,
+		    /eappid\\u0022:\\u0022(.+?)\\u0022,\\u0022/,
+		];
+		let page_eappid = null;
+		for ( let pattern of patterns ) {
+			page_eappid = text.match(pattern);
+			if ( page_eappid !== null ) {
+				break;
+			}
+		}
 		console.log('取得したeappid', page_eappid);
 		if (page_eappid !== null) {
 			chrome.storage.local.set({ eappid: page_eappid[1] }, () => {});
@@ -57,14 +67,22 @@ async function is_login() {
 	const connecter = new api_connecter(eappid_page_url);
 	await connecter.get_method();
 	const html = await connecter.get_dom();
-	const no_login_dom = html.querySelector('.Personalbox__logout');
-	// このDOM要素がある時ログインしていない
-	if (no_login_dom == null) {
-		// 要素がないということはログイン済みである
-		return true;
-	} else {
-		return false;
+
+	// <div id="Login"> の中のリンクを調べる
+	// ログイン状態では
+	// - アカウント名: リンクなし
+	// - 登録情報: https://accounts.yahoo.co.jp/profile?...
+	// ログアウト状態では
+	// - ログインリンク: https://login.yahoo.co.jp/config/login?...
+	// - ID新規作成リンク: https://account.edit.yahoo.co.jp/registration?...
+	// - 登録情報: https://login.yahoo.co.jp/config/login?...
+	const a_in_login_box = html.querySelectorAll('#Login a');
+	for ( a of a_in_login_box ) {
+		if ( a.href.match(/^https:\/\/accounts.yahoo.co.jp\/profile\?/) ) {
+			return true;
+		}
 	}
+	return false;
 }
 
 async function get_mail_count() {
