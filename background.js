@@ -34,7 +34,7 @@ async function set_eappid() {
 
 		const patterns = [/eappid\u0022:\u0022(.+?)\u0022,\u0022/, /eappid\\u0022:\\u0022(.+?)\\u0022,\\u0022/];
 		let page_eappid = null;
-		for (let pattern of patterns) {
+		for (const pattern of patterns) {
 			page_eappid = text.match(pattern);
 			if (page_eappid !== null) {
 				break;
@@ -85,7 +85,7 @@ async function is_login() {
 	// - ID新規作成リンク: https://account.edit.yahoo.co.jp/registration?...
 	// - 登録情報: https://login.yahoo.co.jp/config/login?...
 	const a_in_login_box = html.querySelectorAll('#Login a');
-	for (a of a_in_login_box) {
+	for (const a of a_in_login_box) {
 		if (a.href.match(/^https:\/\/accounts.yahoo.co.jp\/profile\?/)) {
 			return true;
 		}
