@@ -51,16 +51,17 @@ async function set_eappid() {
 	} catch (error) {
 		console.log(error);
 	}
+	clear_eappid();
+	return null;
 }
 
 async function get_eappid() {
 	const eappid = await browser.storage.local.get(['eappid']);
-	if (eappid.eappid == null) {
-		// eappidがない時
-		return await set_eappid();
-	} else {
-		return eappid.eappid;
-	}
+	return eappid.eappid;
+}
+
+function clear_eappid() {
+	chrome.storage.local.set({ eappid: null }, () => {});
 }
 
 async function is_login() {
@@ -85,23 +86,47 @@ async function is_login() {
 	return false;
 }
 
+async function get_mail_count_core(eappid) {
+	const connecter = new api_connecter(new_mail_count_url + eappid);
+	await connecter.get_method();
+	const json = await connecter.get_json();
+	const mail_count = json.Result.NewMailCount;
+	return mail_count;
+}
+
+// すでに取得済みの eappid でメール件数の取得を試みる。
+// ダメなら get_mail_count2 へ。
 async function get_mail_count() {
+	try {
+		const eappid = await get_eappid();
+		if ( eappid  ) {
+			try {
+				return await get_mail_count_core(eappid);
+			} catch (error) {
+				return await get_mail_count2();
+			}
+		} else {
+			return await get_mail_count2();
+		}
+	} catch (error) {
+		console.log(error);
+		return 0;
+	}
+}
+
+// ログイン判定、eaippidの取得をした後にメール件数の取得を試みる。
+async function get_mail_count2() {
 	try {
 		if (!(await is_login())) {
 			// ログインしていない
+			clear_eappid();
 			return 'login';
 		}
-		const eappid = await get_eappid();
-		const connecter = new api_connecter(new_mail_count_url + eappid);
-		try {
-			await connecter.get_method();
-			const json = await connecter.get_json();
-			const mail_count = json.Result.NewMailCount;
-			return mail_count;
-		} catch (error) {
-			await set_eappid();
-			return await get_mail_count();
+		const eappid = await set_eappid();
+		if ( ! eappid ) {
+			return 0;
 		}
+		return await get_mail_count_core(eappid);
 	} catch (error) {
 		console.log(error);
 		return 0;
