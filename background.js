@@ -13,7 +13,7 @@ setInterval(function() {
 
 function view_new_mail_count() {
 	(async () => {
-		let mail_count = await get_mail_count();
+		let mail_count = await mail_count_fetch_process();
 		console.log('mail_count', mail_count);
 
 		if (mail_count == 0) {
@@ -93,7 +93,7 @@ async function is_login() {
 	return false;
 }
 
-async function get_mail_count_core(eappid) {
+async function get_mail_count(eappid) {
 	const connecter = new api_connecter(new_mail_count_url + eappid);
 	await connecter.get_method();
 	const json = await connecter.get_json();
@@ -103,17 +103,17 @@ async function get_mail_count_core(eappid) {
 
 // すでに取得済みの eappid でメール件数の取得を試みる。
 // ダメなら get_mail_count2 へ。
-async function get_mail_count() {
+async function mail_count_fetch_process() {
 	try {
 		const eappid = await get_eappid();
 		if (eappid) {
 			try {
-				return await get_mail_count_core(eappid);
+				return await get_mail_count(eappid);
 			} catch (error) {
-				return await get_mail_count2();
+				return await eaapid_reacquisition_after_get_mail_count();
 			}
 		} else {
-			return await get_mail_count2();
+			return await eaapid_reacquisition_after_get_mail_count();
 		}
 	} catch (error) {
 		console.log(error);
@@ -122,7 +122,7 @@ async function get_mail_count() {
 }
 
 // ログイン判定、eaippidの取得をした後にメール件数の取得を試みる。
-async function get_mail_count2() {
+async function eaapid_reacquisition_after_get_mail_count() {
 	try {
 		if (!(await is_login())) {
 			// ログインしていない
@@ -133,7 +133,7 @@ async function get_mail_count2() {
 		if (!eappid) {
 			return '-';
 		}
-		return await get_mail_count_core(eappid);
+		return await get_mail_count(eappid);
 	} catch (error) {
 		console.log(error);
 		return '-';
