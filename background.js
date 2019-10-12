@@ -52,9 +52,9 @@ async function set_eappid() {
 		}
 	} catch (error) {
 		console.log(error);
+		clear_eappid();
+		return null;
 	}
-	clear_eappid();
-	return null;
 }
 
 async function get_eappid() {
