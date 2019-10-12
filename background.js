@@ -117,7 +117,7 @@ async function get_mail_count() {
 		}
 	} catch (error) {
 		console.log(error);
-		return 0;
+		return '-';
 	}
 }
 
@@ -131,12 +131,12 @@ async function get_mail_count2() {
 		}
 		const eappid = await set_eappid();
 		if (!eappid) {
-			return 0;
+			return '-';
 		}
 		return await get_mail_count_core(eappid);
 	} catch (error) {
 		console.log(error);
-		return 0;
+		return '-';
 	}
 }
 
