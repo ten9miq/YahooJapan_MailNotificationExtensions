@@ -13,7 +13,7 @@ setInterval(function() {
 
 function view_new_mail_count() {
 	(async () => {
-		let mail_count = await get_mail_count();
+		let mail_count = await mail_count_fetch_process();
 		console.log('mail_count', mail_count);
 
 		if (mail_count == 0) {
@@ -32,27 +32,29 @@ async function set_eappid() {
 		await connecter.get_method();
 		const text = await connecter.get_text();
 
-		const patterns = [
-		    /eappid\u0022:\u0022(.+?)\u0022,\u0022/,
-		    /eappid\\u0022:\\u0022(.+?)\\u0022,\\u0022/,
-		];
+		const patterns = [/eappid\u0022:\u0022(.+?)\u0022,\u0022/, /eappid\\u0022:\\u0022(.+?)\\u0022,\\u0022/];
 		let page_eappid = null;
-		for ( let pattern of patterns ) {
+		for (const pattern of patterns) {
 			page_eappid = text.match(pattern);
-			if ( page_eappid !== null ) {
+			if (page_eappid !== null) {
 				break;
 			}
 		}
 		console.log('取得したeappid', page_eappid);
 		if (page_eappid !== null) {
-			chrome.storage.local.set({ eappid: page_eappid[1] }, () => {});
+			chrome.storage.local.set(
+				{
+					eappid: page_eappid[1],
+				},
+				() => {}
+			);
 			return page_eappid[1];
 		}
 	} catch (error) {
 		console.log(error);
+		clear_eappid();
+		return null;
 	}
-	clear_eappid();
-	return null;
 }
 
 async function get_eappid() {
@@ -61,7 +63,12 @@ async function get_eappid() {
 }
 
 function clear_eappid() {
-	chrome.storage.local.set({ eappid: null }, () => {});
+	chrome.storage.local.set(
+		{
+			eappid: null,
+		},
+		() => {}
+	);
 }
 
 async function is_login() {
@@ -78,15 +85,15 @@ async function is_login() {
 	// - ID新規作成リンク: https://account.edit.yahoo.co.jp/registration?...
 	// - 登録情報: https://login.yahoo.co.jp/config/login?...
 	const a_in_login_box = html.querySelectorAll('#Login a');
-	for ( a of a_in_login_box ) {
-		if ( a.href.match(/^https:\/\/accounts.yahoo.co.jp\/profile\?/) ) {
+	for (const a of a_in_login_box) {
+		if (a.href.match(/^https:\/\/accounts.yahoo.co.jp\/profile\?/)) {
 			return true;
 		}
 	}
 	return false;
 }
 
-async function get_mail_count_core(eappid) {
+async function get_mail_count(eappid) {
 	const connecter = new api_connecter(new_mail_count_url + eappid);
 	await connecter.get_method();
 	const json = await connecter.get_json();
@@ -96,26 +103,26 @@ async function get_mail_count_core(eappid) {
 
 // すでに取得済みの eappid でメール件数の取得を試みる。
 // ダメなら get_mail_count2 へ。
-async function get_mail_count() {
+async function mail_count_fetch_process() {
 	try {
 		const eappid = await get_eappid();
-		if ( eappid  ) {
+		if (eappid) {
 			try {
-				return await get_mail_count_core(eappid);
+				return await get_mail_count(eappid);
 			} catch (error) {
-				return await get_mail_count2();
+				return await eaapid_reacquisition_after_get_mail_count();
 			}
 		} else {
-			return await get_mail_count2();
+			return await eaapid_reacquisition_after_get_mail_count();
 		}
 	} catch (error) {
 		console.log(error);
-		return 0;
+		return '-';
 	}
 }
 
 // ログイン判定、eaippidの取得をした後にメール件数の取得を試みる。
-async function get_mail_count2() {
+async function eaapid_reacquisition_after_get_mail_count() {
 	try {
 		if (!(await is_login())) {
 			// ログインしていない
@@ -123,13 +130,13 @@ async function get_mail_count2() {
 			return 'login';
 		}
 		const eappid = await set_eappid();
-		if ( ! eappid ) {
-			return 0;
+		if (!eappid) {
+			return '-';
 		}
-		return await get_mail_count_core(eappid);
+		return await get_mail_count(eappid);
 	} catch (error) {
 		console.log(error);
-		return 0;
+		return '-';
 	}
 }
 

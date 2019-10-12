@@ -1,0 +1,20 @@
+{
+	"env": {
+		"browser": true,
+		"jquery": true,
+		"es6": true,
+		"webextensions": true
+	},
+	"parserOptions": {
+		"sourceType": "module", // ES Moduleを有効にする
+		"ecmaVersion": 2018 // async functionに対してparse error吐くので最新の記載に対応
+	},
+	"extends": [
+		"eslint:recommended", // ESLintが推奨するチェック項目でまとめてチェックする
+		"plugin:prettier/recommended" // ESLintでPrettierを実施し、ESLintと衝突ルールは回避する設定を有効にする
+		// デフォルトで.prettierrcの設定を読み込む
+	],
+	"rules": {
+		"no-console": 1 // consoleを警告する 2はエラーとする
+	}
+}
