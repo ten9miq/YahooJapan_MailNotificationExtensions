@@ -1,4 +1,4 @@
-const wait = 30000;
+const wait = 0.5;
 const eappid_page_url = 'https://www.yahoo.co.jp/'; // eappid と ログイン状態のチェック先
 const new_mail_count_url = 'https://web-yunz.yahoo.co.jp/Yunz/V1/getNotifications?eappid='; // メールの件数の取得先
 const open_ymail_page_url = 'https://jp.mg5.mail.yahoo.co.jp/neo/launch'; // メールの表示ページ
@@ -6,10 +6,15 @@ const open_ymail_page_url = 'https://jp.mg5.mail.yahoo.co.jp/neo/launch'; // メ
 view_new_mail_count();
 
 //一定周期で動作
-setInterval(function() {
-	console.log('Inerval');
-	view_new_mail_count();
-}, wait);
+chrome.runtime.onInstalled.addListener(() => {
+	chrome.alarms.create('checkMail', { periodInMinutes: wait });
+});
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+	if (alarm.name === 'checkMail') {
+		view_new_mail_count();
+	}
+});
 
 function view_new_mail_count() {
 	(async () => {
@@ -20,7 +25,7 @@ function view_new_mail_count() {
 			mail_count = '';
 		}
 
-		chrome.browserAction.setBadgeText({
+		chrome.action.setBadgeText({
 			text: String(mail_count),
 		});
 	})();
@@ -28,9 +33,8 @@ function view_new_mail_count() {
 
 async function set_eappid() {
 	try {
-		const connecter = new api_connecter(eappid_page_url);
-		await connecter.get_method();
-		const text = await connecter.get_text();
+		const response = await fetch(eappid_page_url);
+		const text = await response.text();
 
 		const patterns = [/eappid\u0022:\u0022(.+?)\u0022,\u0022/, /eappid\\u0022:\\u0022(.+?)\\u0022,\\u0022/];
 		let page_eappid = null;
@@ -57,9 +61,16 @@ async function set_eappid() {
 	}
 }
 
-async function get_eappid() {
-	const eappid = await browser.storage.local.get(['eappid']);
-	return eappid.eappid;
+function get_eappid() {
+	return new Promise((resolve, reject) => {
+		chrome.storage.local.get(['eappid'], function (result) {
+			if (chrome.runtime.lastError) {
+				reject(chrome.runtime.lastError);
+			} else {
+				resolve(result.eappid);
+			}
+		});
+	});
 }
 
 function clear_eappid() {
@@ -72,10 +83,6 @@ function clear_eappid() {
 }
 
 async function is_login() {
-	const connecter = new api_connecter(eappid_page_url);
-	await connecter.get_method();
-	const html = await connecter.get_dom();
-
 	// <div id="Login"> の中のリンクを調べる
 	// ログイン状態では
 	// - アカウント名: リンクなし
@@ -84,19 +91,17 @@ async function is_login() {
 	// - ログインリンク: https://login.yahoo.co.jp/config/login?...
 	// - ID新規作成リンク: https://account.edit.yahoo.co.jp/registration?...
 	// - 登録情報: https://login.yahoo.co.jp/config/login?...
-	const a_in_login_box = html.querySelectorAll('#Login a');
-	for (const a of a_in_login_box) {
-		if (a.href.match(/^https:\/\/accounts.yahoo.co.jp\/profile\?/)) {
-			return true;
-		}
-	}
-	return false;
+	const response = await fetch(eappid_page_url);
+	const htmlText = await response.text();
+
+	// ログイン状態を示すリンクが存在するかチェック
+	const isLoggedIn = /https:\/\/accounts\.yahoo\.co\.jp\/profile\?/.test(htmlText);
+	return isLoggedIn;
 }
 
 async function get_mail_count(eappid) {
-	const connecter = new api_connecter(new_mail_count_url + eappid);
-	await connecter.get_method();
-	const json = await connecter.get_json();
+	const response = await fetch(new_mail_count_url + eappid);
+	const json = await response.json();
 	const mail_count = json.Result.NewMailCount;
 	return mail_count;
 }
@@ -141,11 +146,11 @@ async function eaapid_reacquisition_after_get_mail_count() {
 }
 
 //アイコンをクリックした場合YahooMailを開く
-chrome.browserAction.onClicked.addListener(function() {
+chrome.action.onClicked.addListener(function () {
 	chrome.tabs.create({
 		url: open_ymail_page_url,
 	});
-	setTimeout(function() {
+	setTimeout(function () {
 		view_new_mail_count();
 	}, 10000);
 });
