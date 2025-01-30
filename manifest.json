@@ -1,6 +1,6 @@
 {
 	"name": "ヤフーメール通知",
-	"version": "1.0.0",
+	"version": "1.0.2",
 	"manifest_version": 3,
 	"description": "ヤフーメール通知拡張 30秒に一度自動で確認 ログインしておく必要があります。",
 	"permissions": [
