@@ -9,7 +9,7 @@
 	],
 	"host_permissions": [
 		"https://www.yahoo.co.jp/",
-		"https://jp.mg5.mail.yahoo.co.jp/",
+		"https://mail.yahoo.co.jp/",
 		"https://web-yunz.yahoo.co.jp/Yunz/V1/getNotifications"
 	],
 	"action": {
