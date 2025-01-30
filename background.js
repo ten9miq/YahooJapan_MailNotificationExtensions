@@ -1,7 +1,7 @@
 const wait = 0.5;
 const eappid_page_url = 'https://www.yahoo.co.jp/'; // eappid と ログイン状態のチェック先
 const new_mail_count_url = 'https://web-yunz.yahoo.co.jp/Yunz/V1/getNotifications?eappid='; // メールの件数の取得先
-const open_ymail_page_url = 'https://jp.mg5.mail.yahoo.co.jp/neo/launch'; // メールの表示ページ
+const open_ymail_page_url = 'https://mail.yahoo.co.jp/u/pc/f/'; // メールの表示ページ
 
 view_new_mail_count();
 
